@@ -1,34 +1,22 @@
 #!/usr/bin/env bash
-# script that sets up your web servers for the deployment of web_static
+# Set up server file system for deployment
 
-# Install Nginx
-sudo apt-get update
+# install nginx
+sudo apt-get -y update
 sudo apt-get -y install nginx
+sudo service nginx start
 
-# Create directories
-sudo mkdir -p /data/web_static/releases/test/
+# configure file system
 sudo mkdir -p /data/web_static/shared/
+sudo mkdir -p /data/web_static/releases/test/
+echo "Holberton School" | sudo tee /data/web_static/releases/test/index.html > /dev/null
+sudo ln -sf /data/web_static/releases/test/ /data/web_static/current
 
-# Create test html file
-direct="/data/web_static/releases/test/index.html"
-echo -e """
-	<html>
-		<body>
-			Holberton School
-		</body>
-	</html>
-""" | sudo tee $direct
+# set permissions
+sudo chown -R ubuntu:ubuntu /data/
 
-# Create sym link
-ln -sf /data/web_static/releases/test/ /data/web_static/current
+# configure nginx
+sudo sed -i '44i \\n\tlocation /hbnb_static {\n\t\talias /data/web_static/current/;\n\t}' /etc/nginx/sites-available/default
 
-# Give owner of the /data/ folder to ubuntu user and groups
-chown -R ubuntu:ubuntu /data/
-
-# Update Nginx configuration to serve the content of /data/web_static/current/
-# to hbnb_static (https://lolas.tech/hbnb_static)
-config_file="/etc/nginx/sites-available/default"
-sudo sed -i '29a \ \tlocation /hbnb_static/ {\n\t\talias /data/web_static/current/;\n\t}\n' $config_file
-
-# restart server
+# restart web server
 sudo service nginx restart
